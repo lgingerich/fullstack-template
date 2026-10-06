@@ -1,0 +1,32 @@
+---
+description: React and Effect Atom style for the web app
+globs: apps/web/**
+alwaysApply: false
+---
+
+# React and Atom Style
+
+The web app is a thin view over the shared contract. Data comes from the typed client through atoms; components render, they do not fetch.
+
+## Components
+
+- Function components only. Keep them small and focused; extract a component when a branch, list, or layout grows.
+- Derive what you can during render; reach for `useState`/`useMemo` only for genuine state or an expensive computation.
+- Do not hardcode strings, colors, or magic numbers that belong to a theme or config; keep presentation in `styles.css` or CSS classes.
+- Key lists by a stable id, never by array index.
+- Accessibility is not optional: label inputs, keep semantic elements, and do not remove focus affordances.
+
+## Data and Atoms
+
+- Fetch through the shared client (`@fullstack/shared`), never `fetch` directly. The contract is the only source of request and response shapes.
+- Model remote data as an atom (`Atom.make(effect)` / `Atom.fn`), and let the UI render its `AsyncResult` (initial, success, failure). Do not duplicate loading/error booleans alongside it.
+- Bind the API client once (`apps/web/src/api.ts`) and provide it inside the atom's effect, not at the component.
+- Read atoms with the `@effect/atom-react` hooks (`useAtomValue`, `useAtomSet`); keep atom definitions in `atoms.ts`, not inline in components.
+- Wrap the app in `RegistryProvider` once at the root (`main.tsx`); do not create ad-hoc registries per component.
+- Prefer `AsyncResult.builder` (or an explicit switch over initial/success/failure) so every state has a visible branch; never render `undefined` or a blank screen on failure.
+
+## Dev and Build
+
+- API calls are same-origin and proxied to the server by `vite.config.ts` in dev; do not hardcode `localhost:3000` in app code.
+- Keep the app runnable from source (`vite` dev, no prebuilt workspace package) so editing `packages/shared` hot-reloads.
+- Co-locate tests with what they cover and run them with Vitest.

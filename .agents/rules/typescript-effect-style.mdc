@@ -1,0 +1,82 @@
+---
+description: Idiomatic TypeScript and Effect style
+globs: **/*.ts,**/*.tsx,package.json,tsconfig*.json
+alwaysApply: false
+---
+
+# TypeScript and Effect Style
+
+Favor idiomatic, type-safe, readable TypeScript. Let the compiler and the schema layer carry the invariants so runtime code stays small.
+
+## General Style
+
+- Prefer clear, direct code over clever abstractions.
+- Keep functions focused; extract a helper when branching, conversion, or validation grows.
+- Match the strictness in `tsconfig.base.json`; never widen it (`any`, non-null `!`, `as` casts) to make code compile.
+- No `any`, no `as unknown as`. If a type fight is hard, the parser/schema boundary is usually in the wrong place.
+- Imports carry `.ts`/`.tsx` extensions (Node type stripping runs this repo from source) and `verbatimModuleSyntax` is on, so use `import type` for type-only imports.
+- Prefer `const`, early returns, and immutable data. Reach for `let` only for a genuine accumulator or loop.
+
+## Effect Style
+
+- Prefer `Effect.gen` for inline effect code. For reusable functions prefer `Effect.fn("name")` when a tracing span is useful and `Effect.fnUntraced` when it is not; avoid functions that only wrap and return an `Effect.gen`.
+- Do not mix Effect and `async`/`Promise` in the same function. Cross the boundary once at the edge (`Effect.runPromise`, `Runtime`), or use the platform's client, not `await` in the middle of a pipeline.
+- Services are `Context.Service`, declared with their `Shape` and a namespaced id (`"@fullstack/server/Greeter"`). Ship a `*Live` layer next to the service; swap the layer without touching the handler.
+- In an `effect/http-api` handler group, capture services when the group is built (`yield* Service` inside the `HttpApiBuilder.group` builder) rather than calling `Service.use` inside each endpoint. That keeps the layer's requirement a plain service and lets `Layer.provide` satisfy it.
+- Compose layers at the composition root (`apps/server/src/api.ts`), not inside service modules. A module owns its service; the root owns the wiring.
+- Reach for the right scope: `Effect.sync` for pure code that can throw, `Effect.try`/`Effect.tryPromise` at I/O boundaries, `Effect.succeed`/`Effect.fail` for the rest.
+- Keep the success, error, and dependency channels honest. Do not `Effect.orDie` expected failures, and do not widen the error channel to `unknown`.
+
+## Types and Schemas
+
+- Describe data once with `Schema` and derive everything else. `Schema.Class` for records, `Schema.TaggedError` for errors, `Schema.Literal`/`Schema.Union` for closed sets.
+- Parse at the trust boundary (config, request payloads, external responses); trust the type inside.
+- No stringly typed domains; use literal unions or schema brands where a value has a constrained set.
+- Keep conversions on the type, not in free helpers: a `Schema` encoder/decoder, a class method, or a `*Schema` export — not a parallel `toFoo`/`fromFoo` pair.
+
+## Modules and Boundaries
+
+- `packages/shared` defines the HTTP contract (`src/api.ts`) and the client derived from it (`src/client.ts`). Keep it free of React, Node built-ins, and DOM.
+- Describe each endpoint once with `effect/http-api` and derive the client from the same `Api`; never hand-write `fetch` calls or duplicate request/response types.
+- `apps/server` and `apps/web` may depend on `packages/shared`; neither may depend on the other.
+- Prefer named exports. Avoid barrel files that re-export unrelated modules; keep `packages/shared/src/index.ts` as the package's public surface.
+
+## Internal API Changes
+
+- Do not preserve backwards compatibility for internal APIs unless explicitly asked. When semantics change, update the existing function/type and migrate call sites.
+- Do not add parallel helpers such as `*_trusted`, `*_unchecked`, or alternate constructors to avoid changing existing callers. Prefer one function with the correct invariant boundary.
+- When you rename or move a public export, update every importer in the same change; the workspace typecheck is the checklist.
+
+## Errors
+
+- Model expected failures as typed errors (`Schema.TaggedError`), not thrown exceptions, string throws, or `any`.
+- Do not `throw` inside Effect code; return a failed `Effect`. Reserve defects (thrown/`Effect.die`) for genuinely unreachable states.
+- Let errors flow through the error channel and translate at the boundary (HTTP handler, UI) rather than catching and swallowing.
+- Never discard a failure silently — no empty `catch`, no `Effect.ignore` on an effect whose failure a caller would want to see.
+
+## Async and Concurrency
+
+- No floating promises. Either return the promise, `await` it, or hand it to Effect; `void somePromise()` is a smell.
+- Prefer `Effect.all(..., { concurrency })` and structured concurrency over manual `Promise.all` fan-out.
+- Bound unbounded work: streams, retries, and queues need a concurrency limit, a timeout, or a backpressure story.
+- Use `Effect`'s clock, randomness, and config rather than `Date.now()`, `Math.random()`, or `process.env` directly, so tests can control them.
+
+## Configuration and Environment
+
+- Read configuration through `effect/Config` at the composition root (`apps/server/src/config.ts`), not by touching `process.env` across the codebase.
+- Fail fast on missing required config; give optional settings a `Config.withDefault`.
+
+## Performance
+
+Performance is a design-time concern here too: the wins are fewer round trips, smaller payloads, and not re-rendering or re-fetching what did not change.
+
+- Keep hot paths allocation-light; hoist regexes and constants out of loops and render bodies.
+- Batch and dedupe network work; do not create a request per item.
+- Let the schema do decoding once — avoid parse → stringify → parse round trips.
+- Measure before optimizing. Do not add caching, memoization, or a `ponytail:`-less shortcut without a reason the profile or a benchmark supports.
+
+## Documentation
+
+- Document important public types and functions once their purpose is stable.
+- Document invariants that callers or downstream services rely on.
+- Keep module-level comments about intent, not a restatement of the code.

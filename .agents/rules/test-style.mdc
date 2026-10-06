@@ -1,0 +1,58 @@
+---
+description: Testing style and philosophy for TypeScript and Effect projects
+globs: **/*.test.ts,**/*.test.tsx
+alwaysApply: false
+---
+
+# Test Style
+
+Tests should protect behavior, contracts, and user trust, not merely increase coverage.
+
+## What To Test
+
+- Prioritize invariants that must stay true across refactors.
+- Treat the HTTP contract, serialized formats, persisted data, CLI output, and wire protocols as contracts.
+- Add tests before changing semantics that downstream callers or stored data could rely on.
+- Test failure isolation: one bad input, record, request, file, dependency, or external response should not hide unrelated valid work unless the boundary truly cannot continue.
+- Cover edge cases, invalid inputs, empty inputs, ordering, duplicate data, and boundary values.
+- When you add an endpoint or a service, add the test that proves it is wired — an unprovided layer or an unimplemented handler is a bug a unit test of the pure function will miss.
+
+## Test Shape
+
+- Use descriptive test names that explain the scenario and expected behavior.
+- Prefer arranging tests as setup, action, assertion.
+- Keep unit tests small and focused on one behavior.
+- Avoid tests that duplicate implementation details instead of observable behavior.
+- Avoid freezing incidental formatting unless formatting is part of the public contract.
+
+## Effect Tests
+
+- Use `@effect/vitest`. Reach for `it.effect` for effectful tests and `it.layer`/`layer(...)` to share a `Layer` across a suite; do not build and tear down layers by hand.
+- Test an API through `effect/http-api`'s `HttpApiTest.groups` so the real encoding, routing, and decoding run without binding a port.
+- Provide test doubles by swapping a service's `Layer` (an in-memory implementation), not by mocking modules. Tests that supply a different layer are also the proof the layer seam works.
+- Control time, randomness, and config through Effect's `TestClock`, `TestRandom`, and `ConfigProvider` rather than real clocks or `process.env`.
+- Assert on the typed error channel (`Effect.flip`, `Effect.catchTag`) instead of expecting a throw.
+
+## Fakes, Fixtures, And Integration Tests
+
+- For orchestration code, use small fake implementations of local services to verify behavior without coupling tests to external systems.
+- Prefer real fixtures when correctness depends on an external format, protocol, parser, or documented spec.
+- Use mocks sparingly. Do not mock the behavior that the test is supposed to prove.
+- For database or service integrations, prefer realistic integration tests when project infrastructure makes them practical.
+
+## Property And Regression Tests
+
+- Consider property tests (`it.prop`) for parsers, normalization, serialization round trips, scoring, aggregation, ordering, and threshold logic.
+- Add regression tests for bugs before fixing them when the bug can be reproduced locally.
+- Keep regression tests named after the behavior, not the implementation mistake.
+
+## Async Tests
+
+- Use the Effect test helpers' own control flow; do not hide race conditions with arbitrary sleeps.
+- Prefer explicit synchronization, `TestClock` advancement, or polling with clear timeouts.
+
+## Assertions
+
+- Assert the meaningful behavior and evidence, not only that an operation succeeded.
+- Include enough context in assertion messages to make failures diagnosable.
+- In tests, throwing on impossible setup is acceptable, but keep the assertion about behavior explicit and readable.
