@@ -1,0 +1,26 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+build
+*.tsbuildinfo
+
+# Turborepo
+.turbo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Test output
+coverage
+
+# Editor / OS
+.DS_Store
+.idea
+*.log
+
+# Vite
+apps/web/.vite
