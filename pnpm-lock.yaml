@@ -214,8 +214,8 @@ importers:
         version: 4.0.1
     devDependencies:
       '@effect/vitest':
-        specifier: ^4.0.1
-        version: 4.0.1(effect@4.0.1)(vitest@5.0.3(@types/node@26.6.4)(vite@8.3.3(@types/node@26.6.4)))
+        specifier: ^4.0.3
+        version: 4.0.3(effect@4.0.1)(vitest@5.0.3(@types/node@26.6.4)(vite@8.3.3(@types/node@26.6.4)))
       '@types/node':
         specifier: ^26.6.4
         version: 26.6.4
@@ -248,8 +248,8 @@ importers:
         version: 0.27.0
     devDependencies:
       '@effect/vitest':
-        specifier: ^4.0.1
-        version: 4.0.1(effect@4.0.1)(vitest@5.0.3(@types/node@26.6.4)(vite@8.3.3(@types/node@26.6.4)))
+        specifier: ^4.0.3
+        version: 4.0.3(effect@4.0.1)(vitest@5.0.3(@types/node@26.6.4)(vite@8.3.3(@types/node@26.6.4)))
       '@types/react':
         specifier: ^19.2.2
         version: 19.3.0
@@ -444,10 +444,10 @@ packages:
       effect: ^4.0.1
       redis: '>=5.0.0 <7.0.0'
 
-  '@effect/vitest@4.0.1':
-    resolution: {integrity: sha512-DbY9kf/018zBxRIX7rJwBnPVPzSarnUpcshm0vfYPFiDkSa7AFrXTh2BlDNUbrdrmqcIOBhVZ7GkEtxf8WiQrg==}
+  '@effect/vitest@4.0.3':
+    resolution: {integrity: sha512-jsIkpssf0CFuOeycW2sQZkWx0qzlsRv+JIkzd9qQpoFDcHC9JZFSdIjEBAhsdp20pDy4Y/b2vT/ew7wXZxvEig==}
     peerDependencies:
-      effect: ^4.0.1
+      effect: ^4.0.3
       vitest: '>=5.0.0 <6.0.0'
 
   '@jridgewell/gen-mapping@0.3.13':
@@ -1361,7 +1361,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@effect/vitest@4.0.1(effect@4.0.1)(vitest@5.0.3(@types/node@26.6.4)(vite@8.3.3(@types/node@26.6.4)))':
+  '@effect/vitest@4.0.3(effect@4.0.1)(vitest@5.0.3(@types/node@26.6.4)(vite@8.3.3(@types/node@26.6.4)))':
     dependencies:
       effect: 4.0.1
       vitest: 5.0.3(@types/node@26.6.4)(vite@8.3.3(@types/node@26.6.4))
