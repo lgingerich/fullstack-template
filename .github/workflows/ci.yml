@@ -5,17 +5,27 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
-    runs-on: ubuntu-latest
+    # Pinned so a runner image change is a deliberate bump, not a surprise.
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      # Installs pnpm from `packageManager` and Node.js from `.node-version`, then runs a
+      # frozen `pnpm install`. The store is saved from `main` only, so pull requests
+      # restore `main`'s cache without evicting it.
+      - uses: pnpm/setup@v3
         with:
-          node-version-file: .node-version
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
+          cache: true
+          save-cache: ${{ github.ref == 'refs/heads/main' }}
+          require-lockfile: true
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
